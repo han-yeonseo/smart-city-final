@@ -1,0 +1,30 @@
+{
+  "zone": "cheongna",
+  "label": "청라국제업무지구",
+  "year": 2020,
+  "source": "SGIS 통계지리정보서비스 100m 격자 종사자 (to_em_020)",
+  "grid_zone": "라바",
+  "grid_range": {
+    "row_min": 583, "row_max": 609,
+    "col_min": 829, "col_max": 856
+  },
+  "total_employment": 26,
+  "grid_count": 16,
+  "avg_per_grid": 1.6,
+  "max_grid": {
+    "grid_id": "라바586833",
+    "employment": 5,
+    "lat": 37.5450,
+    "lng": 126.6450
+  },
+  "top5_grids": [
+    {"grid_id": "라바586833", "employment": 5, "lat": 37.5450, "lng": 126.6450},
+    {"grid_id": "라바597850", "employment": 3, "lat": 37.5549, "lng": 126.6610},
+    {"grid_id": "라바585834", "employment": 3, "lat": 37.5441, "lng": 126.6460},
+    {"grid_id": "라바580836", "employment": 3, "lat": 37.5396, "lng": 126.6480},
+    {"grid_id": "라바594851", "employment": 3, "lat": 37.5522, "lng": 126.6620}
+  ],
+  "center": {"lat": 37.5450, "lng": 126.6450},
+  "area_km2": 1.5,
+  "note": "2020년 기준 청라국제업무지구 미개장 상태. 종사자 수 극소는 개발 초기 단계 반영."
+}
