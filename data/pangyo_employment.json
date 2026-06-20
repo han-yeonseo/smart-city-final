@@ -1,0 +1,30 @@
+{
+  "zone": "pangyo",
+  "label": "제1판교 (판교테크노밸리)",
+  "year": 2020,
+  "source": "SGIS 통계지리정보서비스 100m 격자 종사자 (to_em_020)",
+  "grid_zone": "라사",
+  "grid_range": {
+    "row_min": 414, "row_max": 441,
+    "col_min": 227, "col_max": 271
+  },
+  "total_employment": 23097,
+  "grid_count": 385,
+  "avg_per_grid": 60.0,
+  "max_grid": {
+    "grid_id": "라사425249",
+    "employment": 2993,
+    "lat": 37.3924,
+    "lng": 127.1095
+  },
+  "top5_grids": [
+    {"grid_id": "라사425249", "employment": 2993, "lat": 37.3924, "lng": 127.1095},
+    {"grid_id": "라사430251", "employment": 2267, "lat": 37.3969, "lng": 127.1116},
+    {"grid_id": "라사422234", "employment": 1954, "lat": 37.3888, "lng": 127.0946},
+    {"grid_id": "라사422252", "employment": 711,  "lat": 37.3888, "lng": 127.1126},
+    {"grid_id": "라사434251", "employment": 548,  "lat": 37.3996, "lng": 127.1116}
+  ],
+  "center": {"lat": 37.3924, "lng": 127.1095},
+  "area_km2": 3.3,
+  "note": "격자 원점: TM중부원점(EPSG:5186) 기준, sx=-415204, sy=190068"
+}
