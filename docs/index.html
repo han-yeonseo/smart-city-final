@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판교 vs 청라 — 스마트시티 비교분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --pangyo: #0057FF;
+    --cheongna: #FF3B3B;
+    --bg: #0A0A0F;
+    --surface: #13131A;
+    --border: #1E1E2E;
+    --text: #E8E8F0;
+    --muted: #6B6B80;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--mono); font-size: 13px; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 80px 2rem 4rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .hero-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 5rem);
+    font-weight: 700; line-height: 1.1;
+    letter-spacing: -0.02em; margin-bottom: 1.5rem;
+  }
+  .hero h1 em { font-style: normal; color: var(--pangyo); }
+  .hero h1 span { color: var(--cheongna); }
+  .hero-sub {
+    font-size: 1.05rem; color: var(--muted); max-width: 560px;
+    margin-bottom: 3rem; line-height: 1.8;
+  }
+  .hero-verdict {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--pangyo);
+    padding: 1rem 1.5rem;
+    font-family: var(--mono); font-size: 13px;
+    color: var(--text); max-width: 600px; line-height: 1.6;
+  }
+
+  /* SECTION */
+  section {
+    max-width: 1100px; margin: 0 auto;
+    padding: 6rem 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .section-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .section-desc {
+    color: var(--muted); margin-bottom: 3rem;
+    max-width: 600px; font-size: 0.95rem;
+  }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); margin-bottom: 3rem;
+  }
+  .kpi-card {
+    background: var(--surface); padding: 1.75rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .kpi-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .kpi-values { display: flex; gap: 1.5rem; align-items: flex-end; }
+  .kpi-p { font-size: 2rem; font-weight: 700; color: var(--pangyo); font-family: var(--mono); }
+  .kpi-c { font-size: 2rem; font-weight: 700; color: var(--cheongna); font-family: var(--mono); }
+  .kpi-unit { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .kpi-desc { font-size: 0.8rem; color: var(--muted); }
+
+  /* COMPARE TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+  .compare-table th, .compare-table td {
+    padding: 1rem 1.25rem; text-align: left;
+    border-bottom: 1px solid var(--border); font-size: 0.9rem;
+  }
+  .compare-table thead tr { background: var(--surface); }
+  .compare-table th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+  .compare-table td.label { color: var(--muted); font-size: 0.85rem; }
+  .compare-table td.p { color: var(--pangyo); font-family: var(--mono); font-weight: 600; }
+  .compare-table td.c { color: var(--cheongna); font-family: var(--mono); font-weight: 600; }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* CHART */
+  .chart-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 2rem; margin-bottom: 2rem;
+  }
+  .chart-title {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem;
+  }
+  canvas { max-height: 320px; }
+
+  /* MAP */
+  #map-wrap {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--border); border: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .map-panel { position: relative; }
+  .map-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 500;
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(8px);
+    padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .map-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .map-dot.p { background: var(--pangyo); }
+  .map-dot.c { background: var(--cheongna); }
+  .map-header-text { font-size: 0.82rem; color: var(--text); }
+  .map-header-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  #map-pangyo, #map-cheongna { height: 420px; }
+  .map-legend {
+    display: flex; gap: 1rem; padding: 0.75rem 1rem;
+    background: var(--surface); font-size: 0.75rem;
+    font-family: var(--mono);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* TIME TOGGLE + SLIDER */
+  .time-toggle {
+    display: flex; gap: 0; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;
+  }
+  .time-btn {
+    padding: 0.5rem 1.25rem; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: var(--mono); font-size: 12px; cursor: pointer;
+    transition: all .2s;
+  }
+  .time-btn.active {
+    background: var(--surface); color: var(--text);
+    border-color: var(--text);
+  }
+  .time-btn:first-child { border-right: none; }
+  .slider-wrap {
+    display: flex; align-items: center; gap: 1rem;
+    margin-left: 1.5rem; flex: 1;
+  }
+  .slider-wrap label {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    white-space: nowrap;
+  }
+  .slider-wrap input[type=range] {
+    flex: 1; accent-color: var(--pangyo); cursor: pointer;
+  }
+  .slider-val {
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    color: var(--text); min-width: 40px; text-align: right;
+  }
+
+  /* ZONE BOUNDARY BADGE */
+  .zone-badge {
+    position: absolute; bottom: 0.75rem; right: 0.75rem; z-index: 500;
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.75rem;
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+  }
+
+  /* COMPARISON BAR */
+  .bar-compare { margin-bottom: 2rem; }
+  .bar-row {
+    display: grid; grid-template-columns: 140px 1fr 1fr;
+    align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;
+  }
+  .bar-label { font-size: 0.8rem; color: var(--muted); font-family: var(--mono); }
+  .bar-track { height: 28px; background: var(--surface); border: 1px solid var(--border); position: relative; }
+  .bar-fill {
+    height: 100%; display: flex; align-items: center;
+    padding-left: 0.5rem; font-family: var(--mono); font-size: 11px;
+    font-weight: 600; white-space: nowrap; transition: width 0.6s ease;
+  }
+
+  /* FINDING */
+  .finding-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .finding-card {
+    background: var(--surface); padding: 2rem;
+  }
+  .finding-num {
+    font-family: var(--mono); font-size: 2.5rem; font-weight: 600;
+    color: var(--pangyo); margin-bottom: 0.5rem;
+  }
+  .finding-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .finding-body { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+
+  /* BOUNDARY LABEL */
+  .boundary-label {
+    background: rgba(10,10,15,0.8) !important;
+    border: none !important;
+    color: #E8E8F0 !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 11px !important;
+    box-shadow: none !important;
+    padding: 2px 6px !important;
+  }
+  .leaflet-tooltip-top.boundary-label::before { display: none; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem; text-align: center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+
+  @media (max-width: 768px) {
+    #map-wrap { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">SMART-CITY / 2026</div>
+  <div class="nav-links">
+    <a href="#overview">개요</a>
+    <a href="#transport">교통망</a>
+    <a href="#landuse">토지이용</a>
+    <a href="#demographics">인구사회</a>
+    <a href="#comparison">종합비교</a>
+    <a href="#finding">결론</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">가천대 스마트시티학과 · 기말 비교분석 시스템</div>
+  <h1><em>판교테크노밸리</em><br>vs <span>청라국제업무지구</span></h1>
+  <p class="hero-sub">
+    두 업무지구의 교통 접근성·토지이용·인구 구조 데이터를 분석하여
+    성공과 실패의 결정적 차이를 도출한다.
+  </p>
+  <div class="hero-verdict">
+    핵심 발견 — 판교역 30분 등시간권 노동시장 규모는 청라의 <strong>2.1배</strong>,
+    업무시설 비율은 <strong>7.5배</strong> 차이. 청라국제업무지구 내
+    업무시설 건축물은 <strong>단 5개</strong>(2026년 기준).
+  </div>
+</div>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-label">01 / 개요</div>
+  <h2 class="section-title">두 업무지구 기본 현황</h2>
+  <p class="section-desc">2020년 인구총조사 및 건축물대장 기준 (행정동 단위 — 삼평동 / 청라동)</p>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">구역 면적</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">66.1</div><div class="kpi-unit">만㎡ / 판교</div></div>
+        <div><div class="kpi-c">27.8</div><div class="kpi-unit">만㎡ / 청라</div></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">업무시설 비율</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">42%</div><div class="kpi-unit">판교</div></div>
+        <div><div class="kpi-c">5.6%</div><div class="kpi-unit">청라</div></div>
+      </div>
+      <div class="kpi-desc">연면적 기준</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">평균 용적률</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">221.9%</div><div class="kpi-unit">판교</div></div>
+        <div><div class="kpi-c">114.3%</div><div class="kpi-unit">청라</div></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">토지이용 혼합도</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">0.362</div><div class="kpi-unit">판교</div></div>
+        <div><div class="kpi-c">0.288</div><div class="kpi-unit">청라</div></div>
+      </div>
+      <div class="kpi-desc">엔트로피 지수 (높을수록 다양)</div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>지표</th>
+        <th>판교테크노밸리</th>
+        <th>청라국제업무지구</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="label">핵심역</td><td class="p">판교역 (신분당선)</td><td class="c">청라국제도시역 (공항철도)</td></tr>
+      <tr><td class="label">건축물 수</td><td class="p">32개</td><td class="c">185개 (업무시설 5개)</td></tr>
+      <tr><td class="label">총 연면적</td><td class="p">1,806,041㎡</td><td class="c">7,160,032㎡</td></tr>
+      <tr><td class="label">업무시설 비율</td><td class="p">42.0%</td><td class="c">5.6%</td></tr>
+      <tr><td class="label">평균 용적률</td><td class="p">221.9%</td><td class="c">114.3%</td></tr>
+      <tr><td class="label">토지이용 혼합도</td><td class="p">0.362</td><td class="c">0.288</td></tr>
+      <tr><td class="label">30분 등시간권 역 수</td><td class="p">91개</td><td class="c">51개</td></tr>
+      <tr><td class="label">30분 도달 가능 인구</td><td class="p">약 471만명</td><td class="c">약 230만명</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- TRANSPORT -->
+<section id="transport">
+  <div class="section-label">02 / 교통망 분석</div>
+  <h2 class="section-title">등시간권 접근성 비교</h2>
+  <p class="section-desc">다익스트라 알고리즘으로 산출한 수도권 지하철 네트워크 기반 누적 도달 역 수 (2026년 6월 기준)</p>
+
+  <div class="chart-wrap">
+    <div class="chart-title">누적 도달 역 수 — 시간대별</div>
+    <canvas id="isoChart"></canvas>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">30분 등시간권</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">91</div><div class="kpi-unit">개 역 / 판교</div></div>
+        <div><div class="kpi-c">51</div><div class="kpi-unit">개 역 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">판교 1.8배 우위</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">60분 등시간권</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">593</div><div class="kpi-unit">개 역 / 판교</div></div>
+        <div><div class="kpi-c">318</div><div class="kpi-unit">개 역 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">판교 1.9배 우위</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">30분 도달 인구</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">471만</div><div class="kpi-unit">명 / 판교</div></div>
+        <div><div class="kpi-c">230만</div><div class="kpi-unit">명 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">시군구 인구 기반 근사값</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">60분 도달 인구</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">879만</div><div class="kpi-unit">명 / 판교</div></div>
+        <div><div class="kpi-c">349만</div><div class="kpi-unit">명 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">시군구 인구 기반 근사값</div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="section-label" style="margin-bottom:0.5rem;">등시간권 지도</div>
+  <div class="time-toggle">
+    <button class="time-btn active" onclick="updateMap(30)">30분</button>
+    <button class="time-btn" onclick="updateMap(60)">60분</button>
+    <div class="slider-wrap">
+      <label>직접 조절</label>
+      <input type="range" id="timeSlider" min="5" max="60" step="5" value="30"
+        oninput="updateMap(+this.value); document.getElementById('sliderVal').textContent=this.value+'분';
+          document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('active'));">
+      <span class="slider-val" id="sliderVal">30분</span>
+    </div>
+  </div>
+  <div id="map-wrap">
+    <div class="map-panel">
+      <div class="map-header">
+        <div class="map-dot p"></div>
+        <div>
+          <div class="map-header-text">판교테크노밸리</div>
+          <div class="map-header-sub">신분당선 판교역</div>
+        </div>
+      </div>
+      <div id="map-pangyo"></div>
+      <div class="zone-badge">종사자 23,097명 · 직주비 0.54</div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#0057FF"></div>0~15분</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4488FF"></div>15~30분</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#88AAFF;opacity:.7"></div>30~60분</div>
+      </div>
+    </div>
+    <div class="map-panel">
+      <div class="map-header">
+        <div class="map-dot c"></div>
+        <div>
+          <div class="map-header-text">청라국제업무지구</div>
+          <div class="map-header-sub">공항철도 청라국제도시역</div>
+        </div>
+      </div>
+      <div id="map-cheongna"></div>
+      <div class="zone-badge">종사자 26명 · 직주비 ≈0.00</div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#FF3B3B"></div>0~15분</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FF7777"></div>15~30분</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFAAAA;opacity:.7"></div>30~60분</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LANDUSE -->
+<section id="landuse">
+  <div class="section-label">03 / 토지이용 분석</div>
+  <h2 class="section-title">주용도별 연면적 구성비</h2>
+  <p class="section-desc">건축물대장 총괄표제부 기준 (행정동 단위)</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2rem;">
+    <div class="chart-wrap" style="border:none;margin:0;">
+      <div class="chart-title">판교테크노밸리 — 삼평동</div>
+      <canvas id="pangyo-donut"></canvas>
+    </div>
+    <div class="chart-wrap" style="border:none;margin:0;border-left:1px solid var(--border);">
+      <div class="chart-title">청라국제업무지구 — 청라동</div>
+      <canvas id="cheongna-donut"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- DEMOGRAPHICS -->
+<section id="demographics">
+  <div class="section-label">04 / 인구사회 분석</div>
+  <h2 class="section-title">인구·종사자 및 직주비</h2>
+  <p class="section-desc">SGIS 100m 격자 종사자 데이터 + 집계구 인구 기반 (2020년 기준)</p>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">총 종사자수</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">23,097</div><div class="kpi-unit">명 / 판교</div></div>
+        <div><div class="kpi-c">26</div><div class="kpi-unit">명 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">SGIS 격자 종사자 집계 (100m 격자)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">구역 내 추정 인구</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">42,600</div><div class="kpi-unit">명 / 판교</div></div>
+        <div><div class="kpi-c">10,500</div><div class="kpi-unit">명 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">면적 비례 배분 추정값</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">직주비</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">0.54</div><div class="kpi-unit">판교</div></div>
+        <div><div class="kpi-c">≈0.00</div><div class="kpi-unit">청라</div></div>
+      </div>
+      <div class="kpi-desc">종사자수 ÷ 상주인구</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">격자당 평균 종사자</div>
+      <div class="kpi-values">
+        <div><div class="kpi-p">60.0</div><div class="kpi-unit">명 / 판교</div></div>
+        <div><div class="kpi-c">1.6</div><div class="kpi-unit">명 / 청라</div></div>
+      </div>
+      <div class="kpi-desc">유효 격자 기준 (판교 385개 / 청라 16개)</div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>지표</th>
+        <th>제1판교</th>
+        <th>청라국제업무지구</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="label">분석 격자 구역</td><td class="p">라사 (100m)</td><td class="c">라바 (100m)</td></tr>
+      <tr><td class="label">분석 격자 수</td><td class="p">385개</td><td class="c">16개</td></tr>
+      <tr><td class="label">총 종사자수</td><td class="p">23,097명</td><td class="c">26명</td></tr>
+      <tr><td class="label">최다 종사자 격자</td><td class="p">2,993명 (라사425249)</td><td class="c">5명 (라바586833)</td></tr>
+      <tr><td class="label">시군구 총인구</td><td class="p">922,202명 (성남시 분당구)</td><td class="c">1,083,068명 (인천시 서구)</td></tr>
+      <tr><td class="label">생산가능인구 (15-64세)</td><td class="p">682,637명 (74.0%)</td><td class="c">813,992명 (75.1%)</td></tr>
+      <tr><td class="label">고령인구 (65세+)</td><td class="p">55,125명 (6.1%)</td><td class="c">52,990명 (5.0%)</td></tr>
+      <tr><td class="label">구역 내 추정 인구</td><td class="p">약 42,600명</td><td class="c">약 10,500명</td></tr>
+      <tr><td class="label">직주비</td><td class="p">0.54</td><td class="c">≈ 0.00</td></tr>
+    </tbody>
+  </table>
+
+  <div class="chart-wrap" style="margin-top:2rem;">
+    <div class="chart-title">연령대별 인구 구조 비교 (시군구 기준)</div>
+    <canvas id="ageChart"></canvas>
+  </div>
+
+  <div style="margin-top:1rem;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:#888;line-height:1.7;">
+    ※ 구역 내 인구는 집계구 shapefile 미확보로 면적 비례 배분 추정값 적용 (판교 3.3km² / 분당구 71.5km², 청라 1.5km² / 서구 154km²)<br>
+    ※ 청라 종사자 26명은 2020년 업무지구 미개장 상태 반영 — 직주비 의미 있는 해석 불가
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="comparison">
+  <div class="section-label">05 / 종합 비교</div>
+  <h2 class="section-title">6개 지표 한눈에 비교</h2>
+  <p class="section-desc">판교(파랑)와 청라(빨강)의 주요 지표를 각 최댓값 기준 정규화하여 시각화</p>
+
+  <div class="bar-compare" id="barCompare"></div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">레이더 차트 — 다차원 비교</div>
+    <canvas id="radarChart" style="max-height:380px;"></canvas>
+  </div>
+</section>
+
+<!-- FINDING -->
+<section id="finding">
+  <div class="section-label">06 / 핵심 발견</div>
+  <h2 class="section-title">성공과 실패의 결정적 차이</h2>
+  <p class="section-desc">데이터 분석을 통해 도출한 판교 성공·청라 실패 요인</p>
+
+  <div class="finding-grid">
+    <div class="finding-card">
+      <div class="finding-num" style="color:var(--pangyo)">1.8×</div>
+      <div class="finding-title">교통 접근성 격차</div>
+      <div class="finding-body">
+        판교역(신분당선+경강선 환승)은 30분 등시간권 내 91개 역에 도달 가능.
+        청라역(공항철도 단일노선)은 51개 역에 그침. 노동시장 규모에서
+        판교가 청라보다 <strong style="color:var(--text)">1.8~2.1배</strong> 우위.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num" style="color:var(--pangyo)">7.5×</div>
+      <div class="finding-title">업무기능 집적도 격차</div>
+      <div class="finding-body">
+        판교 업무시설 비율 42% vs 청라 5.6%. 청라국제업무지구 내
+        업무시설 건축물은 <strong style="color:var(--text)">단 5개</strong>(연면적 398,171㎡)에 불과.
+        2005년 개발계획 승인 후 21년째 업무지구로서 기능 미완성.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num" style="color:var(--pangyo)">2.0×</div>
+      <div class="finding-title">개발 밀도 격차</div>
+      <div class="finding-body">
+        판교 평균 용적률 221.9% vs 청라 114.3%. 판교는 고밀 복합개발로
+        업무·주거·상업 기능이 공존하는 자족도시 구조를 실현.
+        토지이용 혼합도(엔트로피)도 0.362 vs 0.288로 판교 우위.
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  가천대 스마트시티학과 기말과제 · 데이터 기준: 2020 인구총조사, 건축물대장(2026), 수도권 지하철 네트워크(2026)
+</footer>
+
+<script src="data.js"></script>
+<script>
+// ── 누적 접근성 차트
+const isoData = {
+  labels: [0,5,10,15,20,25,30,35,40,45,50,55,60],
+  pangyo: [1,2,7,17,26,52,91,136,194,297,420,511,593],
+  cheongna: [1,2,3,7,17,31,51,66,89,131,197,255,318]
+};
+new Chart(document.getElementById('isoChart'), {
+  type: 'line',
+  data: {
+    labels: isoData.labels,
+    datasets: [
+      {
+        label: '판교역',
+        data: isoData.pangyo,
+        borderColor: '#0057FF',
+        backgroundColor: 'rgba(0,87,255,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: '청라국제도시역',
+        data: isoData.cheongna,
+        borderColor: '#FF3B3B',
+        backgroundColor: 'rgba(255,59,59,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        fill: true,
+        tension: 0.3
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#6B6B80', font: { family: 'IBM Plex Mono', size: 11 } } },
+      tooltip: { backgroundColor: '#13131A', borderColor: '#1E1E2E', borderWidth: 1 }
+    },
+    scales: {
+      x: { title: { display: true, text: '시간(분)', color: '#6B6B80' }, ticks: { color: '#6B6B80' }, grid: { color: '#1E1E2E' } },
+      y: { title: { display: true, text: '도달 가능 역 수', color: '#6B6B80' }, ticks: { color: '#6B6B80' }, grid: { color: '#1E1E2E' } }
+    }
+  }
+});
+
+// ── 도넛 차트
+function makeDonut(id, labels, data, colors) {
+  new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#6B6B80', font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { backgroundColor: '#13131A', borderColor: '#1E1E2E', borderWidth: 1 }
+      }
+    }
+  });
+}
+makeDonut('pangyo-donut',
+  ['공동주택 56.8%', '업무시설 42.0%', '기타 1.2%'],
+  [56.8, 42.0, 1.2],
+  ['#334488', '#0057FF', '#1E1E2E']
+);
+makeDonut('cheongna-donut',
+  ['공동주택 82.9%', '업무시설 5.6%', '공장 3.6%', '발전시설 2.4%', '기타 5.5%'],
+  [82.9, 5.6, 3.6, 2.4, 5.5],
+  ['#883333', '#FF3B3B', '#553333', '#443333', '#1E1E2E']
+);
+
+// ── 지도
+let mapP, mapC, currentMin = 30;
+const PANGYO_CENTER = [37.3946, 127.1112];
+const CHEONGNA_CENTER = [37.5565, 126.6246];
+
+function getColor(min, palette) {
+  if (min <= 15) return palette[0];
+  if (min <= 30) return palette[1];
+  return palette[2];
+}
+
+function initMaps() {
+  const tile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  const attr = '&copy; <a href="https://carto.com/">CARTO</a>';
+
+  mapP = L.map('map-pangyo', { zoomControl: false }).setView(PANGYO_CENTER, 10);
+  L.tileLayer(tile, { attribution: attr }).addTo(mapP);
+  L.control.zoom({ position: 'bottomright' }).addTo(mapP);
+
+  mapC = L.map('map-cheongna', { zoomControl: false }).setView(CHEONGNA_CENTER, 10);
+  L.tileLayer(tile, { attribution: attr }).addTo(mapC);
+  L.control.zoom({ position: 'bottomright' }).addTo(mapC);
+
+  updateMap(30);
+  setTimeout(initBoundaries, 500);
+}
+
+let layerP = null, layerC = null;
+function updateMap(maxMin) {
+  currentMin = maxMin;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  event && event.target && event.target.classList.add('active');
+  document.querySelectorAll('.time-btn').forEach(b => {
+    if (b.textContent.trim() === maxMin + '분') b.classList.add('active');
+    else b.classList.remove('active');
+  });
+
+  if (layerP) mapP.removeLayer(layerP);
+  if (layerC) mapC.removeLayer(layerC);
+
+  const pColors = ['#0057FF','#4488FF','rgba(136,170,255,0.6)'];
+  const cColors = ['#FF3B3B','#FF7777','rgba(255,170,170,0.6)'];
+
+  const pGroup = L.layerGroup();
+  PANGYO_ISO.filter(d => d.min <= maxMin).forEach(d => {
+    L.circleMarker([d.lat, d.lng], {
+      radius: 5, color: getColor(d.min, pColors),
+      fillColor: getColor(d.min, pColors),
+      fillOpacity: 0.85, weight: 0
+    }).bindPopup(`<b>${d.name}</b><br>${d.line}<br>${d.min.toFixed(1)}분`).addTo(pGroup);
+  });
+  layerP = pGroup.addTo(mapP);
+
+  const cGroup = L.layerGroup();
+  CHEONGNA_ISO.filter(d => d.min <= maxMin).forEach(d => {
+    L.circleMarker([d.lat, d.lng], {
+      radius: 5, color: getColor(d.min, cColors),
+      fillColor: getColor(d.min, cColors),
+      fillOpacity: 0.85, weight: 0
+    }).bindPopup(`<b>${d.name}</b><br>${d.line}<br>${d.min.toFixed(1)}분`).addTo(cGroup);
+  });
+  layerC = cGroup.addTo(mapC);
+}
+
+window.addEventListener('load', initMaps);
+
+// ── 구역 경계 사각형
+function addBoundary(map, bounds, color, label) {
+  const rect = L.rectangle(bounds, {
+    color: color, weight: 2, fillOpacity: 0.08,
+    dashArray: '6 4'
+  }).addTo(map);
+  rect.bindTooltip(label, { permanent: true, direction: 'center',
+    className: 'boundary-label' });
+}
+
+function initBoundaries() {
+  // 제1판교 경계 (37.383~37.407N, 127.085~127.135E)
+  addBoundary(mapP,
+    [[37.383, 127.085], [37.407, 127.135]],
+    '#0057FF', '제1판교');
+  // 청라국제업무지구 경계 (37.530~37.558N, 126.630~126.665E)
+  addBoundary(mapC,
+    [[37.530, 126.630], [37.558, 126.665]],
+    '#FF3B3B', '청라국제업무지구');
+}
+
+// ── 비교 막대 차트
+const barData = [
+  { label: '30분 도달 역수',  p: 91,     c: 51,    pMax: 91,   unit: '개',   pStr: '91개',      cStr: '51개' },
+  { label: '종사자수',        p: 23097,  c: 26,    pMax: 23097,unit: '명',   pStr: '23,097명',  cStr: '26명' },
+  { label: '업무시설 비율',   p: 42.0,   c: 5.6,   pMax: 42.0, unit: '%',    pStr: '42.0%',     cStr: '5.6%' },
+  { label: '평균 용적률',     p: 221.9,  c: 114.3, pMax: 221.9,unit: '%',    pStr: '221.9%',    cStr: '114.3%' },
+  { label: '토지이용 혼합도', p: 0.362,  c: 0.288, pMax: 0.362,unit: '',     pStr: '0.362',     cStr: '0.288' },
+  { label: '직주비',          p: 0.54,   c: 0.002, pMax: 0.54, unit: '',     pStr: '0.54',      cStr: '≈0.00' },
+];
+
+function buildBars() {
+  const wrap = document.getElementById('barCompare');
+  barData.forEach(d => {
+    const pPct = Math.round((d.p / d.pMax) * 100);
+    const cPct = Math.max(Math.round((d.c / d.pMax) * 100), 2);
+    wrap.innerHTML += `
+    <div class="bar-row">
+      <div class="bar-label">${d.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pPct}%;background:var(--pangyo);color:#fff;">
+          ${d.pStr}
+        </div>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${cPct}%;background:var(--cheongna);color:#fff;">
+          ${d.cStr}
+        </div>
+      </div>
+    </div>`;
+  });
+  // 헤더 라벨
+  wrap.insertAdjacentHTML('afterbegin', `
+    <div class="bar-row" style="margin-bottom:0.5rem;">
+      <div></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--pangyo);letter-spacing:.1em;">▶ 제1판교</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--cheongna);letter-spacing:.1em;">▶ 청라국제업무지구</div>
+    </div>`);
+}
+buildBars();
+
+// ── 레이더 차트
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['교통접근성\n(30분 역수)', '종사자 밀도', '업무시설\n비율', '평균 용적률', '토지이용\n혼합도', '직주비'],
+    datasets: [
+      {
+        label: '제1판교',
+        data: [100, 100, 100, 100, 100, 100],
+        borderColor: '#0057FF',
+        backgroundColor: 'rgba(0,87,255,0.15)',
+        borderWidth: 2, pointRadius: 4,
+        pointBackgroundColor: '#0057FF'
+      },
+      {
+        label: '청라국제업무지구',
+        data: [
+          Math.round(51/91*100),
+          Math.round(26/23097*100),
+          Math.round(5.6/42.0*100),
+          Math.round(114.3/221.9*100),
+          Math.round(0.288/0.362*100),
+          Math.round(0.002/0.54*100)
+        ],
+        borderColor: '#FF3B3B',
+        backgroundColor: 'rgba(255,59,59,0.15)',
+        borderWidth: 2, pointRadius: 4,
+        pointBackgroundColor: '#FF3B3B'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { color: '#6B6B80', backdropColor: 'transparent', stepSize: 25 },
+        grid: { color: '#1E1E2E' },
+        angleLines: { color: '#1E1E2E' },
+        pointLabels: { color: '#6B6B80', font: { size: 11 } }
+      }
+    },
+    plugins: {
+      legend: { labels: { color: '#6B6B80', font: { size: 12 } } },
+      tooltip: {
+        backgroundColor: '#13131A', borderColor: '#1E1E2E', borderWidth: 1,
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: ${ctx.raw}점 (판교=100 기준)`
+        }
+      }
+    }
+  }
+});
+
+// ── 연령대별 인구 차트
+new Chart(document.getElementById('ageChart'), {
+  type: 'bar',
+  data: {
+    labels: ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80-84','85+'],
+    datasets: [
+      {
+        label: '성남 분당구 (판교)',
+        data: [15474,22930,24710,25037,27699,32903,31824,35222,38584,44463,40221,33899,29169,18995,14022,10699,7421,3988],
+        backgroundColor: 'rgba(0,87,255,0.7)',
+        borderWidth: 0
+      },
+      {
+        label: '인천 서구 (청라)',
+        data: [21626,28498,27666,26264,32158,39385,37269,46003,46514,48949,48067,44788,36179,21203,13981,9229,5741,2836],
+        backgroundColor: 'rgba(255,59,59,0.7)',
+        borderWidth: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#ccc', font: { size: 12 } } }
+    },
+    scales: {
+      x: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { ticks: { color: '#888', callback: v => (v/1000).toFixed(0)+'천명' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
